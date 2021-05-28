@@ -7,11 +7,15 @@ const bodyparser = require('koa-bodyparser')
 const logger = require('koa-logger')
 const session = require('koa-generic-session')
 const redisStore = require('koa-redis')
+const path = require('path')
+const fs = require('fs')
+const morgan = require('koa-morgan')
 const { REDIS_CONF } = require('./conf/db')
 
 const index = require('./routes/index')
 const user = require('./routes/user')
 const product = require('./routes/product')
+const ENV = process.env.NODE_ENV
 
 // error handler
 onerror(app)
@@ -27,6 +31,18 @@ app.use(require('koa-static')(__dirname + '/public'))
 app.use(views(__dirname + '/views', {
   extension: 'pug'
 }))
+
+if (ENV !== 'production') {
+  app.use(morgan('dev'))
+} else {
+  const logFileName = path.join(__dirname, 'logs', 'access.log');
+  const writeStream = fs.createWriteStream(logFileName, {
+    flags: 'a'
+  })
+  app.use(morgan('combined', {
+    stream: writeStream
+  }))
+}
 
 // logger
 app.use(async (ctx, next) => {
