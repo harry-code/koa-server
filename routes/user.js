@@ -1,7 +1,9 @@
 const router = require('koa-router')()
+const { SuccessModel, ErrorModel } = require('./../model/resModel')
 
-router.get('/login', function (ctx, next) {
-  ctx.body = 'this is login!'
+router.post('/login', function (ctx, next) {
+  console.log(ctx.request.body)
+  ctx.body = new SuccessModel('登录成功了')
 })
 
 router.get('/session-test', async (ctx, next) => {
