@@ -10,6 +10,7 @@ const redisStore = require('koa-redis')
 const path = require('path')
 const fs = require('fs')
 const morgan = require('koa-morgan')
+const cors = require('koa2-cors')
 const { REDIS_CONF } = require('./conf/db')
 
 const index = require('./routes/index')
@@ -31,6 +32,18 @@ app.use(require('koa-static')(__dirname + '/public'))
 app.use(views(__dirname + '/views', {
   extension: 'pug'
 }))
+
+// cors配置
+app.use(
+  cors({
+    origin: "*",  // 允许 所有的都可以跨域
+    exposeHeaders: ['WWW-Authenticate', 'Server-Authorization'],
+    maxAge: 50000,
+    credentials: true,
+    allowMethods: ['GET', 'POST', 'DELETE', 'PUT'],
+    allowHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  })
+)
 
 if (ENV !== 'production') {
   app.use(morgan('dev'))
