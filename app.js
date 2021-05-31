@@ -15,7 +15,6 @@ const { REDIS_CONF } = require('./conf/db')
 
 const index = require('./routes/index')
 const user = require('./routes/user')
-const product = require('./routes/product')
 const ENV = process.env.NODE_ENV
 
 // error handler
@@ -23,7 +22,7 @@ onerror(app)
 
 // middlewares
 app.use(bodyparser({
-  enableTypes:['json', 'form', 'text']
+  enableTypes: ['json', 'form', 'text']
 }))
 app.use(json())
 app.use(logger())
@@ -32,6 +31,8 @@ app.use(require('koa-static')(__dirname + '/public'))
 app.use(views(__dirname + '/views', {
   extension: 'pug'
 }))
+
+console.log('REDIS_CONF.host', REDIS_CONF.host)
 
 // cors配置
 app.use(
@@ -66,23 +67,23 @@ app.use(async (ctx, next) => {
 })
 
 // session 配置
-app.keys = ['lly0131ly_#123!']
+app.keys = ['lly0131ly_#123!'] // 加密串
 app.use(session({
   cookie: {
-    path: '/',
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000
+    path: '/', // 全域名生效
+    httpOnly: true, // 只能服务端修改
+    maxAge: 24 * 60 * 60 * 1000 // 过期时间
   },
-  // 配置redis
+  // 配置 redis 地址
   store: redisStore({
-    all: `${REDIS_CONF.host}:${REDIS_CONF.port}`, // 配置本地 redis
+    host: REDIS_CONF.host, 
+    port: REDIS_CONF.port
   })
 }))
 
 // routes 路由注册
 app.use(index.routes(), index.allowedMethods())
 app.use(user.routes(), user.allowedMethods())
-app.use(product.routes(), product.allowedMethods())
 
 // error-handling
 app.on('error', (err, ctx) => {
