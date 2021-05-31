@@ -5,25 +5,14 @@ const { getUser } = require('../controller/user')
 router.prefix('/user')
 
 router.post('/login', async function (ctx, next) {
-  if (!ctx.session) {
-    ctx.session.userInfo = {}
-    return
-  }
   const { username, password } = ctx.request.body
   const res = await getUser(username, password)
-  ctx.session.userInfo = { username, password }
-  ctx.body = new SuccessModel('登录成功了')
-})
-
-router.get('/session-test', async (ctx, next) => {
-  if (ctx.session.viewCount === null) {
-    ctx.session.viewCount= 0 
+  if (res.username) {
+    ctx.session.username = res.username
+    ctx.body = new SuccessModel()
+    return
   }
-  ctx.session.viewCount++
-  ctx.body = {
-    errno: 0,
-    viewCount: ctx.session.viewCount
-  }
+  ctx.body = new ErrorModel('登录失败')
 })
 
 module.exports = router

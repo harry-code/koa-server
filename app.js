@@ -32,8 +32,6 @@ app.use(views(__dirname + '/views', {
   extension: 'pug'
 }))
 
-console.log('REDIS_CONF.host', REDIS_CONF.host)
-
 // cors配置
 app.use(
   cors({

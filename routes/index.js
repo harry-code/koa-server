@@ -1,5 +1,6 @@
 const router = require('koa-router')()
-const { getUser } = require('./../controller/userController')
+const { getUser } = require('./../controller/user')
+const loginCheck = require('./../middleware/loginCheck')
 const { SuccessModel, ErrorModel } = require('./../model/resModel')
 
 router.get('/', async (ctx, next) => {
@@ -11,7 +12,7 @@ router.get('/string', async (ctx, next) => {
   ctx.body = 'koa2 string'
 })
 
-router.get('/json', async (ctx, next) => {
+router.post('/json', loginCheck, async (ctx, next) => {
   ctx.body = {
     title: 'koa2 json'
   }
