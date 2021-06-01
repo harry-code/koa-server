@@ -1,21 +1,9 @@
-const router = require('koa-router')()
-const { getUser } = require('./../controller/user')
-const loginCheck = require('./../middleware/loginCheck')
-const { SuccessModel, ErrorModel } = require('./../model/resModel')
+const fs = require('fs')
 
-router.get('/', async (ctx, next) => {
-  const res = await getUser()
-  ctx.body = new SuccessModel(res)
-})
-
-router.get('/string', async (ctx, next) => {
-  ctx.body = 'koa2 string'
-})
-
-router.post('/json', loginCheck, async (ctx, next) => {
-  ctx.body = {
-    title: 'koa2 json'
-  }
-})
-
-module.exports = router
+module.exports = (app) => {
+  fs.readdirSync(__dirname).forEach(file => {
+    if (file === 'index.js') return
+    const route = require(`./${file}`)
+    app.use(route.routes()).use(route.allowedMethods())
+  })
+}

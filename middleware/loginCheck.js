@@ -1,4 +1,4 @@
-const { ErrorModel } = require('../model/resModel')
+const { ErrorModel } = require('../conf/resModel')
 
 module.exports = async (ctx, next) => {
     if (ctx.session.username) {

@@ -1,6 +1,5 @@
 const Koa = require('koa')
 const app = new Koa()
-const views = require('koa-views')
 const json = require('koa-json')
 const onerror = require('koa-onerror')
 const bodyparser = require('koa-bodyparser')
@@ -11,26 +10,14 @@ const path = require('path')
 const fs = require('fs')
 const morgan = require('koa-morgan')
 const cors = require('koa2-cors')
+const db = require('./models')
 const { REDIS_CONF } = require('./conf/db')
 
-const index = require('./routes/index')
-const user = require('./routes/user')
+const loadRoute = require('./routes')
 const ENV = process.env.NODE_ENV
 
-// error handler
-onerror(app)
-
-// middlewares
-app.use(bodyparser({
-  enableTypes: ['json', 'form', 'text']
-}))
-app.use(json())
-app.use(logger())
-app.use(require('koa-static')(__dirname + '/public'))
-
-app.use(views(__dirname + '/views', {
-  extension: 'pug'
-}))
+// session 配置
+app.keys = ['lly0131ly_#123!'] // 加密串
 
 // cors配置
 app.use(
@@ -42,7 +29,26 @@ app.use(
     allowMethods: ['GET', 'POST', 'DELETE', 'PUT'],
     allowHeaders: ['Content-Type', 'Authorization', 'Accept'],
   })
-)
+).use(bodyparser({
+  enableTypes: ['json', 'form', 'text']
+})).use(
+  json()
+).use(
+  logger()
+).use(
+  require('koa-static')(__dirname + '/public')
+).use(session({
+  cookie: {
+    path: '/', // 全域名生效
+    httpOnly: true, // 只能服务端修改
+    maxAge: 24 * 60 * 60 * 1000 // 过期时间
+  },
+  // 配置 redis 地址
+  store: redisStore({
+    host: REDIS_CONF.host, 
+    port: REDIS_CONF.port
+  })
+}))
 
 if (ENV !== 'production') {
   app.use(morgan('dev'))
@@ -56,36 +62,26 @@ if (ENV !== 'production') {
   }))
 }
 
-// logger
-app.use(async (ctx, next) => {
-  const start = new Date()
-  await next()
-  const ms = new Date() - start
-  console.log(`${ctx.method} ${ctx.url} - ${ms}ms`)
-})
-
-// session 配置
-app.keys = ['lly0131ly_#123!'] // 加密串
-app.use(session({
-  cookie: {
-    path: '/', // 全域名生效
-    httpOnly: true, // 只能服务端修改
-    maxAge: 24 * 60 * 60 * 1000 // 过期时间
-  },
-  // 配置 redis 地址
-  store: redisStore({
-    host: REDIS_CONF.host, 
-    port: REDIS_CONF.port
-  })
-}))
-
 // routes 路由注册
-app.use(index.routes(), index.allowedMethods())
-app.use(user.routes(), user.allowedMethods())
+loadRoute(app)
+
+app.listen(8081, () => {
+  db.sequelize
+    .sync({ force: false }) // If force is true, each DAO will do DROP TABLE IF EXISTS ..., before it tries to create its own table
+    .then(async () => {
+      console.log('sequelize connect success')
+    })
+    .catch(err => {
+      console.log(err)
+    })
+})
 
 // error-handling
 app.on('error', (err, ctx) => {
   console.error('server error', err, ctx)
 });
+
+// error handler
+onerror(app)
 
 module.exports = app
